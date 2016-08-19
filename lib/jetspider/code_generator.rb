@@ -163,14 +163,16 @@ module JetSpider
     end
 
     def visit_ConditionalNode(n)
-      loc = @asm.lazy_location
+      state_endif_loc = @asm.lazy_location
+      state_else_loc = @asm.lazy_location
       visit n.conditions
       # if statement is "FALSE", jump to loc
-      @asm.ifeq loc
+      @asm.ifeq state_else_loc
       visit n.value
-      @asm.goto loc
+      @asm.goto state_endif_loc
+      @asm.fix_location(state_else_loc) 
       visit n.else
-      @asm.fix_location(loc)
+      @asm.fix_location(state_endif_loc)
     end
 
     def visit_WhileNode(n)
