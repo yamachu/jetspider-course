@@ -101,7 +101,8 @@ module JetSpider
     def visit_FunctionExprNode(n) raise "FunctionExprNode not implemented"; end
 
     def visit_ReturnNode(n)
-      raise NotImplementedError, 'ReturnNode'
+      visit n.value
+      @asm.popv
     end
 
     # These nodes should not be visited directly
