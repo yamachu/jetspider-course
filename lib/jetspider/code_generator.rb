@@ -223,50 +223,67 @@ module JetSpider
     end
 
     def visit_AddNode(n)
-      node_or_number, is_Number = const_NumberNode_Convolution(n)
-      if is_Number
-        @asm.int8 node_or_number
-      end
+      # visit n.left
+      # visit n.value
+      # @asm.add
+
+      visit const_NumberNode_Convolution(n)
+      p "?????????????????"
+      p n
     end
 
     def const_NumberNode_Convolution(n)
-      if   "#{n.left.class}"  == "RKelly::Nodes::AddNode"
-        node_or_Number, is_Number = const_NumberNode_Convolution(n.left)
-        if "#{n.value.class}" == "RKelly::Nodes::NumberNode"
-          if is_Number
-            return node_or_Number + n.value.value, true
-          else
-            visit n.value
-            @asm.add
-            return n, false
-          end
-        else
-          if is_Number
-            @asm.int8 node_or_Number
-            visit n.value
-            @asm.add
-            return n, false
-          else
-            visit n.value
-            @asm.add
-            return n, false
-          end
-        end
-      elsif "#{n.left.class}"  == "RKelly::Nodes::NumberNode"
-        if "#{n.value.class}" == "RKelly::Nodes::NumberNode"
-          p (n.left.value + n.value.value)
-          return n.left.value + n.value.value, true
-        else
-          @asm.int8 n.left.value
+      if "#{n.class}" == "RKelly::Nodes::NumberNode"
+        p "--------isNumber", n
+        return n
+      elsif "#{n.class}" == "RKelly::Nodes::ParentheticalNode"
+        p "jfoijiofiejaofjeoiajfe"
+        p n.value
+        p "fiejwafoejoowafio"
+
+        return const_NumberNode_Convolution(n.value)
+      elsif "#{n.class}" != "RKelly::Nodes::AddNode"
+        p "isUndefined-----------", n
+        return n
+      else
+        p "-----isAdd-----", n.left
+        optimized_left = const_NumberNode_Convolution(n.left)
+        p "partial<left>start"
+        p optimized_left
+        p "partial<left>end"
+        if optimized_left == n.left
+          visit n.left
           visit n.value
           @asm.add
-          return n, false
+          return nil
         end
-      else
-        visit n.left
-        visit n.value
-        @asm.add
-        return n, false
+        optimized_right = const_NumberNode_Convolution(n.value)
+        p "partial<right>start"
+        if !optimized_right.nil?
+          p optimized_right
+        end
+        p "partial<right>end"
+        if optimized_right.nil?
+          @asm.int8 optimized_left.value
+          visit n.value
+          @asm.add
+          return nil
+        end
+        # RKelly::Nodes::AddNode.new(left, right)
+        if "#{optimized_left.class}" != "RKelly::Nodes::NumberNode"
+          visit optimized_left
+          visit optimized_right
+          @asm.add
+          return nil
+        end
+
+        optimized = RKelly::Nodes::NumberNode.new(
+          optimized_left.value + optimized_right.value)
+        p "optimized!!!!!!"
+        p optimized
+        p ""
+      
+        return optimized
       end
     end
 
