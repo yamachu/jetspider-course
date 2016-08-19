@@ -223,9 +223,51 @@ module JetSpider
     end
 
     def visit_AddNode(n)
-      visit n.left
-      visit n.value
-      @asm.add
+      node_or_number, is_Number = const_NumberNode_Convolution(n)
+      if is_Number
+        @asm.int8 node_or_number
+      end
+    end
+
+    def const_NumberNode_Convolution(n)
+      if   "#{n.left.class}"  == "RKelly::Nodes::AddNode"
+        node_or_Number, is_Number = const_NumberNode_Convolution(n.left)
+        if "#{n.value.class}" == "RKelly::Nodes::NumberNode"
+          if is_Number
+            return node_or_Number + n.value.value, true
+          else
+            visit n.value
+            @asm.add
+            return n, false
+          end
+        else
+          if is_Number
+            @asm.int8 node_or_Number
+            visit n.value
+            @asm.add
+            return n, false
+          else
+            visit n.value
+            @asm.add
+            return n, false
+          end
+        end
+      elsif "#{n.left.class}"  == "RKelly::Nodes::NumberNode"
+        if "#{n.value.class}" == "RKelly::Nodes::NumberNode"
+          p (n.left.value + n.value.value)
+          return n.left.value + n.value.value, true
+        else
+          @asm.int8 n.left.value
+          visit n.value
+          @asm.add
+          return n, false
+        end
+      else
+        visit n.left
+        visit n.value
+        @asm.add
+        return n, false
+      end
     end
 
     def visit_SubtractNode(n)
@@ -335,7 +377,12 @@ module JetSpider
     end
 
     def visit_NumberNode(n)
-      @asm.int8 n.value
+      value = n.value
+      if value == 1
+        @asm.one
+      else
+        @asm.int8 value
+      end
     end
 
     def visit_StringNode(n)
