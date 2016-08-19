@@ -165,6 +165,7 @@ module JetSpider
     def visit_ConditionalNode(n)
       loc = @asm.lazy_location
       visit n.conditions
+      # if statement is "FALSE", jump to loc
       @asm.ifeq loc
       visit n.value
       @asm.goto loc
